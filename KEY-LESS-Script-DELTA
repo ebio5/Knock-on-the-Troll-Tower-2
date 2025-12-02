@@ -1,0 +1,92 @@
+-- Rayfield 公式読み込み
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+-- ウィンドウ作成
+local Window = Rayfield:CreateWindow({
+    Name = "トロールタワー2",
+    LoadingTitle = "ロード中...",
+    LoadingSubtitle = "Made by You",
+    ConfigurationSaving = { Enabled = true, FolderName = nil, FileName = "TT2Config" },
+})
+
+-- タブ作成
+local MainTab = Window:CreateTab("メイン")
+local TeleportTab = Window:CreateTab("テレポート")
+local player = game.Players.LocalPlayer
+
+-- スピードスライダー
+MainTab:CreateSlider({
+    Name = "移動スピード",
+    Range = {1, 300},
+    Increment = 1,
+    Suffix = "速度",
+    CurrentValue = 16,
+    Callback = function(val)
+        if player.Character and player.Character:FindFirstChild("Humanoid") then
+            player.Character.Humanoid.WalkSpeed = val
+        end
+    end
+})
+
+-- SLAPP Tool
+MainTab:CreateButton({
+    Name = "SLAPP Toolを取得",
+    Callback = function()
+        local Tool = Instance.new("Tool")
+        Tool.Name = "Fire Parts"
+        Tool.RequiresHandle = false
+        Tool.Parent = player.Backpack
+
+        Tool.Activated:Connect(function()
+            local mouse = player:GetMouse()
+            local target = mouse.Target
+            if target and target:IsA("Part") then
+                local touch = target:FindFirstChildOfClass("TouchTransmitter")
+                if touch and player.Character and player.Character.PrimaryPart then
+                    firetouchinterest(player.Character.PrimaryPart, target, 0)
+                    firetouchinterest(player.Character.PrimaryPart, target, 1)
+                end
+            end
+        end)
+    end
+})
+
+-- Noclip
+local noclipEnabled = false
+MainTab:CreateToggle({
+    Name = "Noclip (壁すり抜け)",
+    CurrentValue = false,
+    Callback = function(value)
+        noclipEnabled = value
+        if noclipEnabled then
+            game:GetService("RunService").Stepped:Connect(function()
+                if player.Character then
+                    for _, part in pairs(player.Character:GetDescendants()) do
+                        if part:IsA("BasePart") and part.CanCollide then
+                            part.CanCollide = false
+                        end
+                    end
+                end
+            end)
+        end
+    end
+})
+
+-- テレポートボタン
+local Teleports = {
+    ["ゴールにテレポート"] = CFrame.new(280.42, 347.15, -35.34),
+    ["トロール地点にテレポート"] = CFrame.new(-78.19, 148.41, -81.99),
+    ["リスポーン地点にテレポート"] = CFrame.new(-5.17, 3.15, -4.78),
+    ["グループのスキップにテレポート"] = CFrame.new(-32.50, -1.61, -78.11)
+}
+
+for name, cf in pairs(Teleports) do
+    TeleportTab:CreateButton({
+        Name = name,
+        Callback = function()
+            if player.Character and player.Character.PrimaryPart then
+                player.Character:SetPrimaryPartCFrame(cf)
+            end
+        end
+    })
+end
