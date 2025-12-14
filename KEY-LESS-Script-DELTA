@@ -1,22 +1,50 @@
+--====================================================
+-- トロールタワー2 - Anti-KB統合版 (Rayfield)
+-- 🚨 新しい「Anti-KB」タブを追加し、指定されたImmunityコードをロード 🚨
+--====================================================
+
 -- Rayfield 公式読み込み
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
+-- 変数定義
+local player = game.Players.LocalPlayer
+local noclipConnection = nil -- Noclipの接続を管理するための変数
+
 -- ウィンドウ作成
 local Window = Rayfield:CreateWindow({
-    Name = "トロールタワー2",
+    Name = "トロールタワー2 | Anti-KB統合版",
     LoadingTitle = "ロード中...",
-    LoadingSubtitle = "Made by You",
-    ConfigurationSaving = { Enabled = true, FolderName = nil, FileName = "TT2Config" },
+    LoadingSubtitle = "Immunity Enabled",
+    ConfigurationSaving = { Enabled = true, FolderName = nil, FileName = "TT2AntiKBConfig" },
 })
 
--- タブ作成
-local MainTab = Window:CreateTab("メイン")
+--====================================================
+-- タブ作成 (最終構成)
+--====================================================
+local AntiKBTab = Window:CreateTab("Anti-KB")      -- 新しい「Anti-KB」タブ
+local UtilityTab = Window:CreateTab("ユーティリティ") -- ユーティリティ機能
 local TeleportTab = Window:CreateTab("テレポート")
-local VFlyTab = Window:CreateTab("VFly") -- 新しいVFly用のタブを追加
-local player = game.Players.LocalPlayer
+local VFlyTab = Window:CreateTab("VFly")
+
+--====================================================
+-- Anti-KBタブ (Knockback Immunity統合)
+--====================================================
+
+AntiKBTab:CreateButton({
+    Name = "ノックバック耐性コードを実行",
+    Callback = function()
+        -- 外部スクリプトのロードと実行 (Immune slap tower work)
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/amdzy088/Immune-slap-tower-/refs/heads/main/Immune%20slap%20tower%20work"))()
+        Rayfield:Notify({Title="Anti-KB", Content="ノックバック耐性コードをロードしました。", Duration=5})
+    end
+})
+
+--====================================================
+-- ユーティリティタブ (Noclip/Speed/SLAP Tool)
+--====================================================
 
 -- スピードスライダー
-MainTab:CreateSlider({
+UtilityTab:CreateSlider({
     Name = "移動スピード",
     Range = {1, 300},
     Increment = 1,
@@ -29,19 +57,19 @@ MainTab:CreateSlider({
     end
 })
 
--- SLAPP Tool
-MainTab:CreateButton({
-    Name = "SLAPP Toolを取得",
+-- SLAP Toolを取得 (基本機能)
+UtilityTab:CreateButton({
+    Name = "SLAP Toolを取得 (基本機能)",
     Callback = function()
         local Tool = Instance.new("Tool")
-        Tool.Name = "Fire Parts"
+        Tool.Name = "SLAPP Tool"
         Tool.RequiresHandle = false
         Tool.Parent = player.Backpack
 
         Tool.Activated:Connect(function()
             local mouse = player:GetMouse()
             local target = mouse.Target
-            if target and target:IsA("Part") then
+            if target and target:IsA("BasePart") then
                 local touch = target:FindFirstChildOfClass("TouchTransmitter")
                 if touch and player.Character and player.Character.PrimaryPart then
                     firetouchinterest(player.Character.PrimaryPart, target, 0)
@@ -49,22 +77,18 @@ MainTab:CreateButton({
                 end
             end
         end)
+        Rayfield:Notify({Title="SLAP Tool", Content="基本SLAP Toolがバックパックに作成されました。", Duration=2})
     end
 })
 
--- Noclip
-local noclipEnabled = false
-MainTab:CreateToggle({
+-- Noclip (壁すり抜け)
+UtilityTab:CreateToggle({
     Name = "Noclip (壁すり抜け)",
     CurrentValue = false,
     Callback = function(value)
-        noclipEnabled = value
-        if noclipEnabled then
-            -- CanCollideを無効にする機能はRunService.Stepped内で継続的に実行する必要がある
-            -- 既存のコードをそのまま使用し、RunService.Stepped接続を一度だけ作成
-            local steppedConnection = nil
-            if value then
-                steppedConnection = game:GetService("RunService").Stepped:Connect(function()
+        if value then
+            if not noclipConnection then
+                noclipConnection = game:GetService("RunService").Stepped:Connect(function()
                     if player.Character then
                         for _, part in pairs(player.Character:GetDescendants()) do
                             if part:IsA("BasePart") and part.CanCollide then
@@ -73,18 +97,19 @@ MainTab:CreateToggle({
                         end
                     end
                 end)
-            else
-                -- トグルがオフになったときに接続を解除したいが、元のコードには解除ロジックがない。
-                -- 今回は元のコードの構造を尊重し、継続的な動作を前提とする。
-                -- 正しく実装する場合は、接続を解除するロジックが必要。
             end
         else
-             -- トグルをオフにした際の処理は元のコードにはないので、ここでは省略する
+            if noclipConnection then
+                noclipConnection:Disconnect()
+                noclipConnection = nil
+            end
         end
     end
 })
 
--- テレポートボタン
+--====================================================
+-- テレポートタブ
+--====================================================
 local Teleports = {
     ["ゴールにテレポート"] = CFrame.new(280.42, 347.15, -35.34),
     ["トロール地点にテレポート"] = CFrame.new(-78.19, 148.41, -81.99),
@@ -103,11 +128,13 @@ for name, cf in pairs(Teleports) do
     })
 end
 
--- VFly GUI スクリプトの組み込み
+--====================================================
+-- VFlyタブ
+--====================================================
 VFlyTab:CreateButton({
     Name = "VFly GUIを実行",
     Callback = function()
-        -- 外部スクリプトのロードと実行
         loadstring(game:HttpGet("https://raw.githubusercontent.com/makkurokurosukescript/VFly-gui/refs/heads/main/VFly%20gui", true))()
+        Rayfield:Notify({Title="VFly", Content="VFly GUIがロードされました。", Duration=3})
     end
 })
