@@ -1,140 +1,104 @@
---====================================================
--- トロールタワー2 - Anti-KB統合版 (Rayfield)
--- 🚨 新しい「Anti-KB」タブを追加し、指定されたImmunityコードをロード 🚨
---====================================================
+-- Delta / Android 対応 TikTok風 ローディングUI
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local player = Players.LocalPlayer
 
--- Rayfield 公式読み込み
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+-- 既存削除
+pcall(function()
+    player.PlayerGui.TikTokLoader:Destroy()
+end)
 
--- 変数定義
-local player = game.Players.LocalPlayer
-local noclipConnection = nil -- Noclipの接続を管理するための変数
+-- GUI
+local gui = Instance.new("ScreenGui")
+gui.Name = "TikTokLoader"
+gui.ResetOnSpawn = false
+gui.IgnoreGuiInset = true
+gui.Parent = player.PlayerGui
 
--- ウィンドウ作成
-local Window = Rayfield:CreateWindow({
-    Name = "トロールタワー2 | Anti-KB統合版",
-    LoadingTitle = "ロード中...",
-    LoadingSubtitle = "Immunity Enabled",
-    ConfigurationSaving = { Enabled = true, FolderName = nil, FileName = "TT2AntiKBConfig" },
-})
+-- 黒カード（ど真ん中）
+local card = Instance.new("Frame")
+card.Size = UDim2.fromOffset(520,130)
+card.Position = UDim2.new(0.5,-260,0.5,-65)
+card.BackgroundColor3 = Color3.fromRGB(10,10,10)
+card.ZIndex = 50
+card.Parent = gui
+Instance.new("UICorner", card).CornerRadius = UDim.new(0,20)
 
---====================================================
--- タブ作成 (最終構成)
---====================================================
-local AntiKBTab = Window:CreateTab("Anti-KB")      -- 新しい「Anti-KB」タブ
-local UtilityTab = Window:CreateTab("ユーティリティ") -- ユーティリティ機能
-local TeleportTab = Window:CreateTab("テレポート")
-local VFlyTab = Window:CreateTab("VFly")
+-- 左丸アイコン
+local icon = Instance.new("Frame")
+icon.Size = UDim2.fromOffset(64,64)
+icon.Position = UDim2.new(0,22,0.5,-32)
+icon.BackgroundColor3 = Color3.fromRGB(70,70,70)
+icon.ZIndex = 51
+icon.Parent = card
+Instance.new("UICorner", icon).CornerRadius = UDim.new(1,0)
 
---====================================================
--- Anti-KBタブ (Knockback Immunity統合)
---====================================================
+-- 上テキスト
+local title = Instance.new("TextLabel")
+title.Size = UDim2.fromOffset(380,26)
+title.Position = UDim2.new(0,110,0,16)
+title.BackgroundTransparency = 1
+title.Text = "TikTok @f15.1232"
+title.TextColor3 = Color3.new(1,1,1)
+title.Font = Enum.Font.GothamMedium
+title.TextSize = 20
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.ZIndex = 51
+title.Parent = card
 
-AntiKBTab:CreateButton({
-    Name = "ノックバック耐性コードを実行",
-    Callback = function()
-        -- 外部スクリプトのロードと実行 (Immune slap tower work)
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/amdzy088/Immune-slap-tower-/refs/heads/main/Immune%20slap%20tower%20work"))()
-        Rayfield:Notify({Title="Anti-KB", Content="ノックバック耐性コードをロードしました。", Duration=5})
+-- グレーバー
+local barBg = Instance.new("Frame")
+barBg.Size = UDim2.fromOffset(380,22)
+barBg.Position = UDim2.new(0,110,0.5,-11)
+barBg.BackgroundColor3 = Color3.fromRGB(85,85,85)
+barBg.ZIndex = 51
+barBg.Parent = card
+Instance.new("UICorner", barBg).CornerRadius = UDim.new(1,0)
+
+-- 紫バー
+local bar = Instance.new("Frame")
+bar.Size = UDim2.fromOffset(0,22)
+bar.Position = UDim2.new(0,0,0,0)
+bar.BackgroundColor3 = Color3.fromRGB(170,0,255)
+bar.ZIndex = 52
+bar.Parent = barBg
+Instance.new("UICorner", bar).CornerRadius = UDim.new(1,0)
+
+-- 下テキスト
+local sub = Instance.new("TextLabel")
+sub.Size = UDim2.fromOffset(380,22)
+sub.Position = UDim2.new(0,110,1,-30)
+sub.BackgroundTransparency = 1
+sub.Text = "Follow pls TikTok @f15.1232"
+sub.TextColor3 = Color3.new(1,1,1)
+sub.Font = Enum.Font.Gotham
+sub.TextSize = 16
+sub.TextXAlignment = Enum.TextXAlignment.Left
+sub.ZIndex = 51
+sub.Parent = card
+
+-- ロード進行（2秒ごとに1/4）
+task.spawn(function()
+    for i = 1,4 do
+        TweenService:Create(
+            bar,
+            TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+            {Size = UDim2.fromOffset(95 * i,22)}
+        ):Play()
+        task.wait(2)
     end
-})
 
---====================================================
--- ユーティリティタブ (Noclip/Speed/SLAP Tool)
---====================================================
-
--- スピードスライダー
-UtilityTab:CreateSlider({
-    Name = "移動スピード",
-    Range = {1, 300},
-    Increment = 1,
-    Suffix = "速度",
-    CurrentValue = 16,
-    Callback = function(val)
-        if player.Character and player.Character:FindFirstChild("Humanoid") then
-            player.Character.Humanoid.WalkSpeed = val
-        end
+    -- 下に10ずつ落としながら消す
+    for step = 1,12 do
+        card.Position = card.Position + UDim2.new(0,0,0,10)
+        card.BackgroundTransparency += 0.05
+        task.wait(0.03)
     end
-})
 
--- SLAP Toolを取得 (基本機能)
-UtilityTab:CreateButton({
-    Name = "SLAP Toolを取得 (基本機能)",
-    Callback = function()
-        local Tool = Instance.new("Tool")
-        Tool.Name = "SLAPP Tool"
-        Tool.RequiresHandle = false
-        Tool.Parent = player.Backpack
+    gui:Destroy()
 
-        Tool.Activated:Connect(function()
-            local mouse = player:GetMouse()
-            local target = mouse.Target
-            if target and target:IsA("BasePart") then
-                local touch = target:FindFirstChildOfClass("TouchTransmitter")
-                if touch and player.Character and player.Character.PrimaryPart then
-                    firetouchinterest(player.Character.PrimaryPart, target, 0)
-                    firetouchinterest(player.Character.PrimaryPart, target, 1)
-                end
-            end
-        end)
-        Rayfield:Notify({Title="SLAP Tool", Content="基本SLAP Toolがバックパックに作成されました。", Duration=2})
-    end
-})
-
--- Noclip (壁すり抜け)
-UtilityTab:CreateToggle({
-    Name = "Noclip (壁すり抜け)",
-    CurrentValue = false,
-    Callback = function(value)
-        if value then
-            if not noclipConnection then
-                noclipConnection = game:GetService("RunService").Stepped:Connect(function()
-                    if player.Character then
-                        for _, part in pairs(player.Character:GetDescendants()) do
-                            if part:IsA("BasePart") and part.CanCollide then
-                                part.CanCollide = false
-                            end
-                        end
-                    end
-                end)
-            end
-        else
-            if noclipConnection then
-                noclipConnection:Disconnect()
-                noclipConnection = nil
-            end
-        end
-    end
-})
-
---====================================================
--- テレポートタブ
---====================================================
-local Teleports = {
-    ["ゴールにテレポート"] = CFrame.new(280.42, 347.15, -35.34),
-    ["トロール地点にテレポート"] = CFrame.new(-78.19, 148.41, -81.99),
-    ["リスポーン地点にテレポート"] = CFrame.new(-5.17, 3.15, -4.78),
-    ["グループのスキップにテレポート"] = CFrame.new(-32.50, -1.61, -78.11)
-}
-
-for name, cf in pairs(Teleports) do
-    TeleportTab:CreateButton({
-        Name = name,
-        Callback = function()
-            if player.Character and player.Character.PrimaryPart then
-                player.Character:SetPrimaryPartCFrame(cf)
-            end
-        end
-    })
-end
-
---====================================================
--- VFlyタブ
---====================================================
-VFlyTab:CreateButton({
-    Name = "VFly GUIを実行",
-    Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/makkurokurosukescript/VFly-gui/refs/heads/main/VFly%20gui", true))()
-        Rayfield:Notify({Title="VFly", Content="VFly GUIがロードされました。", Duration=3})
-    end
-})
+    -- ✅ ロード完了後にスクリプト実行
+    loadstring(game:HttpGet(
+        "https://raw.githubusercontent.com/ebio5/Knock-on-the-Troll-Tower-2/refs/heads/main/KEY-LESS-Script-DELTA"
+    ))()
+end)
